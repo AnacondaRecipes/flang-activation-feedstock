@@ -12,8 +12,6 @@ source:
 
 build:
   number: 0
-  # intentionally only windows (main target) & linux (debuggability)
-  skip: true  # [osx]
 
 outputs:
   - name: flang_impl_{{ cross_target_platform }}
@@ -24,7 +22,7 @@ outputs:
       - lld                     # [win]
       # for llvm-ar.exe
       - llvm-tools              # [win]
-      - compiler-rt_{{ cross_target_platform }} ={{ version }}
+      - compiler-rt ={{ version }}
     test:
       commands:
         - {{ CBUILD }}-flang --version  # [unix]
