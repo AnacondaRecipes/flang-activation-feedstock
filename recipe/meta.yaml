@@ -12,6 +12,8 @@ source:
 
 build:
   number: 0
+  # TODO: Skipping osx until flang is available.
+  skip: true  # [osx]
 
 outputs:
   - name: flang_impl_{{ cross_target_platform }}
