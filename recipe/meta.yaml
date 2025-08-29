@@ -12,23 +12,25 @@ source:
 
 build:
   number: 0
-  # intentionally only windows (main target) & linux (debuggability)
+  # TODO: Skipping osx until flang is available.
   skip: true  # [osx]
 
 outputs:
   - name: flang_impl_{{ cross_target_platform }}
-    script: install_flang_impl.sh  # [unix]
+    script: install_flang_impl.sh   # [unix]
+    script: install_flang_impl.bat  # [win]
     # we don't cross-compile on windows -> no symlinks
     requirements:
       - flang ={{ version }}
       - lld                     # [win]
       # for llvm-ar.exe
       - llvm-tools              # [win]
-      - compiler-rt_{{ cross_target_platform }} ={{ version }}
+      - compiler-rt ={{ version }}
     test:
       commands:
         - {{ CBUILD }}-flang --version  # [unix]
         - {{ CHOST }}-flang --version   # [unix]
+        - flang --version               # [win]
 
   - name: flang_{{ cross_target_platform }}
     script: install_flang.sh  # [unix]
@@ -55,8 +57,16 @@ outputs:
 about:
   home: https://flang.llvm.org
   license: BSD-3-Clause
+  license_family: BSD
   license_file: LICENSE
   summary: Flang is a Fortran compiler targeting LLVM.
+  description: |
+    Flang is a modern Fortran compiler targeting LLVM. This package provides
+    activation scripts and compiler wrappers that enable the use of Flang as
+    the Fortran compiler in conda environments. It includes platform-specific
+    configurations for cross-compilation support and ensures proper integration
+    with the conda build system for Fortran projects.
+  doc_url: https://flang.llvm.org
   dev_url: https://github.com/llvm/llvm-project
 
 extra:
