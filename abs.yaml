@@ -6,7 +6,5 @@ build_parameters:
 staging_channel_upload_target: llvm-21.1.8-stage2-build-0
 
 channels:
-  # Main channel first - llvm-tools, lld, compiler-rt 21.1.8 are already released
+  # flang 21.1.8 is now released to main channel
   - defaults
-  # Staging only needed for flang 21.1.8 (not yet in main)
-  - https://staging.continuum.io/pbp/llvm-21.1.8-stage2-build-0
