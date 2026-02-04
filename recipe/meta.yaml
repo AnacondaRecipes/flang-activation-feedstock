@@ -45,6 +45,7 @@ outputs:
         - m2-sed    # [win]
       run:
         - {{ pin_subpackage("flang_impl_" ~ cross_target_platform, exact=True) }}
+        - libflang-rt >={{ version }}  # [linux]  # Runtime shared library
     test:
       files:
         - hello_world.f90
