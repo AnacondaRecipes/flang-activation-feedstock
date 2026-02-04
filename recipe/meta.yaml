@@ -22,6 +22,7 @@ outputs:
     # we don't cross-compile on windows -> no symlinks
     requirements:
       - flang ={{ version }}
+      - flang-rt_{{ cross_target_platform }} ={{ version }}  # Fortran runtime (new in LLVM 21)
       - lld                     # [win]
       # for llvm-ar.exe
       - llvm-tools              # [win]
@@ -37,7 +38,7 @@ outputs:
     script: install_flang.bat  # [win]
     run_exports:
       strong:   # [unix]
-        - libflang >={{ version }}  # [unix]
+        - libflang-rt >={{ version }}  # [unix]  # Changed from libflang in LLVM 21
     requirements:
       build:
         - sed       # [unix]
