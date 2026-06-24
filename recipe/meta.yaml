@@ -11,7 +11,7 @@ source:
   sha256: d1d8e0fb5a8aaa838fadd68866d7c1ca4b26dc9bc4f78bd128d4996d6711e8d9
 
 build:
-  number: 0
+  number: 1
   # TODO: Skipping osx until flang is available.
   skip: true  # [osx]
 
