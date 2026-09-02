@@ -1,21 +1,24 @@
 CBUILD:
   - x86_64-conda-linux-gnu      # [linux64]
   - aarch64-conda_cos7-linux-gnu  # [aarch64]
-  - x86_64-pc-windows-msvc      # [win]
+  - x86_64-pc-windows-msvc      # [win64]
+  - aarch64-pc-windows-msvc     # [win and arm64]
   - arm64-apple-darwin20.0.0    # [osx and arm64]
 
 CHOST:
   - x86_64-conda-linux-gnu      # [linux64]
   - aarch64-conda_cos7-linux-gnu  # [aarch64]
 # - wasm32-unknown-emscripten   # [linux]
-  - x86_64-pc-windows-msvc      # [win]
+  - x86_64-pc-windows-msvc      # [win64]
+  - aarch64-pc-windows-msvc     # [win and arm64]
   - arm64-apple-darwin20.0.0    # [osx and arm64]
 
 cross_target_platform:
   - linux-64                    # [linux64]
   - linux-aarch64               # [aarch64]
 # - emscripten-wasm32           # [linux]
-  - win-64                      # [win]
+  - win-64                      # [win64]
+  - win-arm64                   # [win and arm64]
   - osx-arm64                   # [osx and arm64]
 
 zip_keys:
