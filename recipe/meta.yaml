@@ -17,16 +17,23 @@ build:
 
 outputs:
   - name: flang_impl_{{ cross_target_platform }}
-    script: install_flang_impl.sh   # [unix]
-    script: install_flang_impl.bat  # [win]
+    script: {{ "install_flang_impl.bat" if win else "install_flang_impl.sh" }}
     # we don't cross-compile on windows -> no symlinks
+    # host and run are the same list (what conda-build makes of a flat output requirements list)
     requirements:
-      - flang ={{ version }}
-      - flang-rt_{{ cross_target_platform }} ={{ version }}  # Fortran runtime (new in LLVM 21)
-      - lld                     # [win]
-      # for llvm-ar.exe
-      - llvm-tools              # [win]
-      - compiler-rt ={{ version }}
+      host:
+        - flang ={{ version }}
+        - flang-rt_{{ cross_target_platform }} ={{ version }}  # Fortran runtime (new in LLVM 21)
+        - lld                     # [win]
+        # for llvm-ar.exe
+        - llvm-tools              # [win]
+        - compiler-rt ={{ version }}
+      run:
+        - flang ={{ version }}
+        - flang-rt_{{ cross_target_platform }} ={{ version }}
+        - lld                     # [win]
+        - llvm-tools              # [win]
+        - compiler-rt ={{ version }}
     test:
       commands:
         - {{ CBUILD }}-flang --version  # [unix]
@@ -34,15 +41,14 @@ outputs:
         - flang --version               # [win]
 
   - name: flang_{{ cross_target_platform }}
-    script: install_flang.sh  # [unix]
-    script: install_flang.bat  # [win]
+    script: {{ "install_flang.bat" if win else "install_flang.sh" }}
     run_exports:
       strong:   # [unix]
         - libflang-rt >={{ version }}  # [unix]  # Changed from libflang in LLVM 21
     requirements:
       build:
         - sed       # [unix]
-        - m2-sed    # [win]
+        - msys2-sed  # [win]
       run:
         - {{ pin_subpackage("flang_impl_" ~ cross_target_platform, exact=True) }}
         - libflang-rt >={{ version }}  # [linux]  # Runtime shared library
