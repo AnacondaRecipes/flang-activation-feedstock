@@ -1,0 +1,10 @@
+# PR CI only - flang 23.1.4 from AnacondaRecipes/flang-feedstock#9 (graph of head bbc9dbb),
+# flang-rt 23.1.4 from AnacondaRecipes/flang-rt-feedstock#3 (graph of head e5b9b5a),
+# mlir/libmlir23 23.1.4 from AnacondaRecipes/mlir-feedstock#16 (graph of head 6b0d66e) and
+# lld 23.1.4 from AnacondaRecipes/lld-feedstock#17 (graph of head 4b1cc14);
+# REMOVE before merge (none of them is on pkgs/main yet)
+channels:
+  - https://package-build.internal.anaconda.com/pkg-orchestrator/v1/channels/graphs/9c74a65f-0e42-4939-9417-49ea818e9e7b
+  - https://package-build.internal.anaconda.com/pkg-orchestrator/v1/channels/graphs/201941e2-fbe3-4609-ae7e-8d24ff3e08d1
+  - https://package-build.internal.anaconda.com/pkg-orchestrator/v1/channels/graphs/78f3453a-6303-40a3-a748-d7bf72aeadc8
+  - https://package-build.internal.anaconda.com/pkg-orchestrator/v1/channels/graphs/ea3bdd83-87e5-4b21-a497-f9ba52eb3aec

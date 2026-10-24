@@ -1,4 +1,4 @@
-{% set version = "22.1.2" %}
+{% set version = "23.1.4" %}
 
 package:
   name: flang-activation
@@ -8,10 +8,10 @@ source:
   # unused, but helpful so the bot creates updates automatically;
   # we use the _signature_, which is tiny and thus much faster to download
   url: https://github.com/llvm/llvm-project/releases/download/llvmorg-{{ version.replace(".rc", "-rc") }}/llvm-project-{{ version.replace(".rc", "-rc") }}.src.tar.xz.sig
-  sha256: d1d8e0fb5a8aaa838fadd68866d7c1ca4b26dc9bc4f78bd128d4996d6711e8d9
+  sha256: a9f42dbc5c6675365ea83983465b6f7316bbf95621d52e2623f51f60a8173622
 
 build:
-  number: 1
+  number: 0
   # TODO: Skipping osx until flang is available.
   skip: true  # [osx]
 
@@ -51,10 +51,43 @@ outputs:
         - hello_world.f90
       commands:
         # on linux we point FC to the symlink; on windows, we point to the binary
+        # the activation script hardcodes the target prefix (it must not depend on CHOST at activation time)
+        - grep -q 'FC="{{ CHOST }}-flang"' $PREFIX/etc/conda/activate.d/flang_{{ cross_target_platform }}_activate.sh   # [unix]
         - $FC hello_world.f90       # [unix]
         - "%FC% hello_world.f90"    # [win]
         - ./a.out   # [unix]
         - a.exe     # [win]
+        # since LLVM 23 the intrinsic modules come from flang-rt_{{ cross_target_platform }};
+        # compile, link and run a program using them through the activated compiler
+        - echo 'program t' > test_modules.f90                                          # [unix]
+        - echo 'use iso_fortran_env' >> test_modules.f90                               # [unix]
+        - echo 'use iso_c_binding' >> test_modules.f90                                 # [unix]
+        - echo 'implicit none' >> test_modules.f90                                     # [unix]
+        - echo 'integer(c_int) i' >> test_modules.f90                                  # [unix]
+        - echo 'real(real64) x' >> test_modules.f90                                    # [unix]
+        - echo 'i = 42' >> test_modules.f90                                            # [unix]
+        - echo 'x = real(i, c_double)' >> test_modules.f90                             # [unix]
+        - echo 'if (int(x, int64) .ne. 42_int64) error stop 1' >> test_modules.f90     # [unix]
+        - echo 'print *, compiler_version()' >> test_modules.f90                       # [unix]
+        - echo 'end program t' >> test_modules.f90                                     # [unix]
+        - $FC test_modules.f90 -o test_modules     # [unix]
+        - ./test_modules                           # [unix]
+        - echo program t > test_modules.f90                                            # [win]
+        - echo use iso_fortran_env >> test_modules.f90                                 # [win]
+        - echo use iso_c_binding >> test_modules.f90                                   # [win]
+        - echo implicit none >> test_modules.f90                                       # [win]
+        - echo integer(c_int) i >> test_modules.f90                                    # [win]
+        - echo real(real64) x >> test_modules.f90                                      # [win]
+        - echo i = 42 >> test_modules.f90                                              # [win]
+        - echo x = real(i, c_double) >> test_modules.f90                               # [win]
+        - echo if (int(x, int64) .ne. 42_int64) error stop 1 >> test_modules.f90       # [win]
+        - echo print *, compiler_version() >> test_modules.f90                         # [win]
+        - echo end program t >> test_modules.f90                                       # [win]
+        # with FFLAGS/LDFLAGS as set by activate.bat, as a build system would use them
+        - "%FC% %FFLAGS% test_modules.f90 -o test_modules.exe %LDFLAGS%"   # [win]
+        - test_modules.exe                                                 # [win]
+        # the compiler-rt builtins library that activate.bat adds to LDFLAGS
+        - if not exist "%CONDA_PREFIX%\Library\lib\clang\{{ version.split(".")[0] }}\lib\windows\clang_rt.builtins-x86_64.lib" exit 1   # [win64]
 
 about:
   home: https://flang.llvm.org
