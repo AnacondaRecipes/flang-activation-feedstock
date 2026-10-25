@@ -94,6 +94,7 @@ outputs:
         - test_modules.exe                                                 # [win]
         # the compiler-rt builtins library that activate.bat adds to LDFLAGS
         - if not exist "%CONDA_PREFIX%\Library\lib\clang\{{ version.split(".")[0] }}\lib\windows\clang_rt.builtins-x86_64.lib" exit 1   # [win64]
+        - if not exist "%CONDA_PREFIX%\Library\lib\clang\{{ version.split(".")[0] }}\lib\windows\clang_rt.builtins-aarch64.lib" exit 1  # [win and arm64]
 
 about:
   home: https://flang.llvm.org
