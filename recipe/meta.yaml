@@ -55,46 +55,17 @@ outputs:
     test:
       files:
         - hello_world.f90
+        - test_modules.f90
+        - test_flang.sh      # [unix]
+        - test_flang.bat     # [win]
       commands:
         # on linux we point FC to the symlink; on windows, we point to the binary
         # the activation script hardcodes the target prefix (it must not depend on CHOST at activation time)
         - grep -q 'FC="{{ CHOST }}-flang"' $PREFIX/etc/conda/activate.d/flang_{{ cross_target_platform }}_activate.sh   # [unix]
-        - $FC hello_world.f90       # [unix]
-        - "%FC% hello_world.f90"    # [win]
-        - ./a.out   # [unix]
-        - a.exe     # [win]
-        # since LLVM 23 the intrinsic modules come from flang-rt_{{ cross_target_platform }};
-        # compile, link and run a program using them through the activated compiler
-        - echo 'program t' > test_modules.f90                                          # [unix]
-        - echo 'use iso_fortran_env' >> test_modules.f90                               # [unix]
-        - echo 'use iso_c_binding' >> test_modules.f90                                 # [unix]
-        - echo 'implicit none' >> test_modules.f90                                     # [unix]
-        - echo 'integer(c_int) i' >> test_modules.f90                                  # [unix]
-        - echo 'real(real64) x' >> test_modules.f90                                    # [unix]
-        - echo 'i = 42' >> test_modules.f90                                            # [unix]
-        - echo 'x = real(i, c_double)' >> test_modules.f90                             # [unix]
-        - echo 'if (int(x, int64) .ne. 42_int64) error stop 1' >> test_modules.f90     # [unix]
-        - echo 'print *, compiler_version()' >> test_modules.f90                       # [unix]
-        - echo 'end program t' >> test_modules.f90                                     # [unix]
-        - $FC test_modules.f90 -o test_modules     # [unix]
-        - ./test_modules                           # [unix]
-        - echo program t > test_modules.f90                                            # [win]
-        - echo use iso_fortran_env >> test_modules.f90                                 # [win]
-        - echo use iso_c_binding >> test_modules.f90                                   # [win]
-        - echo implicit none >> test_modules.f90                                       # [win]
-        - echo integer(c_int) i >> test_modules.f90                                    # [win]
-        - echo real(real64) x >> test_modules.f90                                      # [win]
-        - echo i = 42 >> test_modules.f90                                              # [win]
-        - echo x = real(i, c_double) >> test_modules.f90                               # [win]
-        - echo if (int(x, int64) .ne. 42_int64) error stop 1 >> test_modules.f90       # [win]
-        - echo print *, compiler_version() >> test_modules.f90                         # [win]
-        - echo end program t >> test_modules.f90                                       # [win]
-        # with FFLAGS/LDFLAGS as set by activate.bat, as a build system would use them
-        - "%FC% %FFLAGS% test_modules.f90 -o test_modules.exe %LDFLAGS%"   # [win]
-        - test_modules.exe                                                 # [win]
-        # the compiler-rt builtins library that activate.bat adds to LDFLAGS
-        - if not exist "%CONDA_PREFIX%\Library\lib\clang\{{ version.split(".")[0] }}\lib\windows\clang_rt.builtins-x86_64.lib" exit 1   # [win64]
-        - if not exist "%CONDA_PREFIX%\Library\lib\clang\{{ version.split(".")[0] }}\lib\windows\clang_rt.builtins-aarch64.lib" exit 1  # [win and arm64]
+        # compile, link and run hello_world.f90 and test_modules.f90 through the activated compiler
+        - bash test_flang.sh     # [unix]
+        - call test_flang.bat {{ version.split(".")[0] }} x86_64    # [win64]
+        - call test_flang.bat {{ version.split(".")[0] }} aarch64   # [win and arm64]
 
 about:
   home: https://flang.llvm.org
