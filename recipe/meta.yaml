@@ -1,4 +1,4 @@
-{% set version = "22.1.2" %}
+{% set version = "23.1.4" %}
 
 package:
   name: flang-activation
@@ -8,25 +8,32 @@ source:
   # unused, but helpful so the bot creates updates automatically;
   # we use the _signature_, which is tiny and thus much faster to download
   url: https://github.com/llvm/llvm-project/releases/download/llvmorg-{{ version.replace(".rc", "-rc") }}/llvm-project-{{ version.replace(".rc", "-rc") }}.src.tar.xz.sig
-  sha256: d1d8e0fb5a8aaa838fadd68866d7c1ca4b26dc9bc4f78bd128d4996d6711e8d9
+  sha256: a9f42dbc5c6675365ea83983465b6f7316bbf95621d52e2623f51f60a8173622
 
 build:
-  number: 1
+  number: 0
   # TODO: Skipping osx until flang is available.
   skip: true  # [osx]
 
 outputs:
   - name: flang_impl_{{ cross_target_platform }}
-    script: install_flang_impl.sh   # [unix]
-    script: install_flang_impl.bat  # [win]
+    script: {{ "install_flang_impl.bat" if win else "install_flang_impl.sh" }}
     # we don't cross-compile on windows -> no symlinks
+    # host and run are the same list (what conda-build makes of a flat output requirements list)
     requirements:
-      - flang ={{ version }}
-      - flang-rt_{{ cross_target_platform }} ={{ version }}  # Fortran runtime (new in LLVM 21)
-      - lld                     # [win]
-      # for llvm-ar.exe
-      - llvm-tools              # [win]
-      - compiler-rt ={{ version }}
+      host:
+        - flang ={{ version }}
+        - flang-rt_{{ cross_target_platform }} ={{ version }}  # Fortran runtime (new in LLVM 21)
+        - lld                     # [win]
+        # for llvm-ar.exe
+        - llvm-tools              # [win]
+        - compiler-rt ={{ version }}
+      run:
+        - flang ={{ version }}
+        - flang-rt_{{ cross_target_platform }} ={{ version }}
+        - lld                     # [win]
+        - llvm-tools              # [win]
+        - compiler-rt ={{ version }}
     test:
       commands:
         - {{ CBUILD }}-flang --version  # [unix]
@@ -34,27 +41,31 @@ outputs:
         - flang --version               # [win]
 
   - name: flang_{{ cross_target_platform }}
-    script: install_flang.sh  # [unix]
-    script: install_flang.bat  # [win]
+    script: {{ "install_flang.bat" if win else "install_flang.sh" }}
     run_exports:
       strong:   # [unix]
         - libflang-rt >={{ version }}  # [unix]  # Changed from libflang in LLVM 21
     requirements:
       build:
         - sed       # [unix]
-        - m2-sed    # [win]
+        - msys2-sed  # [win]
       run:
         - {{ pin_subpackage("flang_impl_" ~ cross_target_platform, exact=True) }}
         - libflang-rt >={{ version }}  # [linux]  # Runtime shared library
     test:
       files:
         - hello_world.f90
+        - test_modules.f90
+        - test_flang.sh      # [unix]
+        - test_flang.bat     # [win]
       commands:
         # on linux we point FC to the symlink; on windows, we point to the binary
-        - $FC hello_world.f90       # [unix]
-        - "%FC% hello_world.f90"    # [win]
-        - ./a.out   # [unix]
-        - a.exe     # [win]
+        # the activation script hardcodes the target prefix (it must not depend on CHOST at activation time)
+        - grep -q 'FC="{{ CHOST }}-flang"' $PREFIX/etc/conda/activate.d/flang_{{ cross_target_platform }}_activate.sh   # [unix]
+        # compile, link and run hello_world.f90 and test_modules.f90 through the activated compiler
+        - bash test_flang.sh     # [unix]
+        - call test_flang.bat {{ version.split(".")[0] }} x86_64    # [win64]
+        - call test_flang.bat {{ version.split(".")[0] }} aarch64   # [win and arm64]
 
 about:
   home: https://flang.llvm.org
