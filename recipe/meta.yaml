@@ -11,38 +11,46 @@ source:
   sha256: ee44b67f2260fd87d40377560672ac0562bf9dc335b89d3c35edc41faa350424
 
 build:
-  number: 0
+  number: 1
   # TODO: Skipping osx until flang is available.
   skip: true  # [osx]
 
 outputs:
   - name: flang_impl_{{ cross_target_platform }}
-    script: install_flang_impl.sh   # [unix]
-    script: install_flang_impl.bat  # [win]
+    script: {{ "install_flang_impl.bat" if win else "install_flang_impl.sh" }}
     # we don't cross-compile on windows -> no symlinks
     requirements:
-      - flang ={{ version }}
-      - flang-rt_{{ cross_target_platform }} ={{ version }}  # Fortran runtime (new in LLVM 21)
-      - lld                     # [win]
-      # for llvm-ar.exe
-      - llvm-tools              # [win]
-      - compiler-rt ={{ version }}
+      host:
+        - flang ={{ version }}
+        - flang-rt_{{ cross_target_platform }} ={{ version }}  # Fortran runtime (new in LLVM 21)
+        - lld ={{ version }}       # [win]
+        - llvm-tools ={{ version }}  # [win]
+        - compiler-rt ={{ version }}
+      run:
+        - flang ={{ version }}
+        - flang-rt_{{ cross_target_platform }} ={{ version }}
+        - lld ={{ version }}       # [win]
+        - llvm-tools ={{ version }}  # [win]
+        - compiler-rt ={{ version }}
     test:
       commands:
         - {{ CBUILD }}-flang --version  # [unix]
         - {{ CHOST }}-flang --version   # [unix]
         - flang --version               # [win]
+        - flang --version | findstr "{{ version }}"  # [win]
+        - flang --version | findstr "aarch64-pc-windows-msvc"  # [win and arm64]
+        - flang --version | findstr "x86_64-pc-windows-msvc"  # [win64]
+        - lld-link --version | findstr "{{ version }}"  # [win]
 
   - name: flang_{{ cross_target_platform }}
-    script: install_flang.sh  # [unix]
-    script: install_flang.bat  # [win]
+    script: {{ "install_flang.bat" if win else "install_flang.sh" }}
     run_exports:
       strong:   # [unix]
         - libflang-rt >={{ version }}  # [unix]  # Changed from libflang in LLVM 21
     requirements:
       build:
         - sed       # [unix]
-        - m2-sed    # [win]
+        - msys2-sed  # [win]
       run:
         - {{ pin_subpackage("flang_impl_" ~ cross_target_platform, exact=True) }}
         - libflang-rt >={{ version }}  # [linux]  # Runtime shared library
@@ -52,9 +60,11 @@ outputs:
       commands:
         # on linux we point FC to the symlink; on windows, we point to the binary
         - $FC hello_world.f90       # [unix]
-        - "%FC% hello_world.f90"    # [win]
+        - "%FC% %FFLAGS% hello_world.f90 %LDFLAGS%"    # [win]
         - ./a.out   # [unix]
         - a.exe     # [win]
+        - if not exist "%CONDA_PREFIX%\Library\lib\clang\{{ version.split(".")[0] }}\lib\windows\clang_rt.builtins-x86_64.lib" exit 1   # [win64]
+        - if not exist "%CONDA_PREFIX%\Library\lib\clang\{{ version.split(".")[0] }}\lib\windows\clang_rt.builtins-aarch64.lib" exit 1  # [win and arm64]
 
 about:
   home: https://flang.llvm.org
